@@ -21,6 +21,12 @@ require_once CUSTOM_BANNER_PLUGIN_PATH . 'admin/admin-menu.php';
 // Hook de activación del plugin
 register_activation_hook(__FILE__, 'custom_banner_plugin_activate');
 
+function custom_banner_enqueue_styles() { 
+    wp_enqueue_style('custom-banner-styles', plugin_dir_url(__FILE__) . 'admin/css/styles.css'); 
+} 
+
+add_action('admin_enqueue_scripts', 'custom_banner_enqueue_styles');
+
 function custom_banner_plugin_activate() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'banners';
