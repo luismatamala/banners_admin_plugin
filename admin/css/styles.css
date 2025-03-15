@@ -1,3 +1,7 @@
 .card{
     max-width: unset !important;
 }
+
+.wp-core-ui select {
+    max-width: unset !important;
+}

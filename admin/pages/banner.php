@@ -4,83 +4,79 @@ if (!defined('ABSPATH')) {
 }
 
 function custom_banner_page() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'banners';
+    $items_per_page = 5; // Número de elementos por página
+    $current_page = isset($_GET['paged']) ? absint($_GET['paged']) : 1;
+    $offset = ($current_page - 1) * $items_per_page;
+
+    // Obtener el total de registros
+    $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+
+    // Obtener los registros con límite y desplazamiento
+    $banners = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name LIMIT %d OFFSET %d", $items_per_page, $offset));
+
+    // Calcular el total de páginas
+    $total_pages = ceil($total_items / $items_per_page);
     ?>
     <div class="wrap">
-        <h1 class="mb-4">Configuración del Banner</h1>
+        <h1 class="mb-4"><strong>Configuración del Banner</strong></h1>
         
         <div class="container">
             <div class="card shadow-sm">
                 <div class="card-header">
-                    <h5 class="card-title">Crea tu banner</h5>
+                    <h5 class="card-title"><strong>Crea tu banner</strong></h5>
                 </div>
                 <div class="card-body">
                     <?php
                     // Si se envió el formulario...
                     if (isset($_POST['submit'])) {
-                        update_option('custom_banner_name', sanitize_text_field($_POST['banner_name']));
-                        update_option('custom_banner_description', sanitize_text_field($_POST['banner_description']));
-                        update_option('custom_banner_url', esc_url_raw($_POST['banner_url']));
-                        update_option('custom_banner_position', sanitize_text_field($_POST['banner_position']));
-                        update_option('custom_banner_views', intval($_POST['banner_views']));
-                        update_option('custom_banner_start_date', sanitize_text_field($_POST['banner_start_date']));
-                        update_option('custom_banner_end_date', sanitize_text_field($_POST['banner_end_date']));
-                        update_option('custom_banner_active', isset($_POST['banner_active']) ? 1 : 0);
+                        $banner_name = sanitize_text_field($_POST['banner_name']);
+                        $banner_description = sanitize_text_field($_POST['banner_description']);
+                        $banner_url = esc_url_raw($_POST['banner_url']);
+                        $banner_position = sanitize_text_field($_POST['banner_position']);
+                        $banner_views = intval($_POST['banner_views']);
+                        $banner_start_date = sanitize_text_field($_POST['banner_start_date']);
+                        $banner_end_date = sanitize_text_field($_POST['banner_end_date']);
+                        $banner_active = 1;
 
                         if (!function_exists('wp_handle_upload')) {
                             require_once ABSPATH . 'wp-admin/includes/file.php';
                         }
 
-                        $uploadedfile = $_FILES['banner_image'];
+                        $uploadedfile_desktop = $_FILES['banner_image_desktop'];
+                        $uploadedfile_mobile = $_FILES['banner_image_mobile'];
                         $upload_overrides = array('test_form' => false);
-                        $movefile = wp_handle_upload($uploadedfile, $upload_overrides);
+                        $movefile_desktop = wp_handle_upload($uploadedfile_desktop, $upload_overrides);
+                        $movefile_mobile = wp_handle_upload($uploadedfile_mobile, $upload_overrides);
 
-                        if ($movefile && !isset($movefile['error'])) {
-                            $filename = $movefile['file'];
-                            $filetype = wp_check_filetype($filename, null);
+                        if ($movefile_desktop && !isset($movefile_desktop['error']) && $movefile_mobile && !isset($movefile_mobile['error'])) {
+                            $path_desktop = $movefile_desktop['url'];
+                            $path_mobile = $movefile_mobile['url'];
 
-                            $attachment = array(
-                                'guid'           => $movefile['url'],
-                                'post_mime_type' => $filetype['type'],
-                                'post_title'     => sanitize_file_name($uploadedfile['name']),
-                                'post_content'   => '',
-                                'post_status'    => 'inherit'
+                            $wpdb->insert(
+                                $table_name,
+                                array(
+                                    'name' => $banner_name,
+                                    'description' => $banner_description,
+                                    'path_desktop' => $path_desktop,
+                                    'path_mobile' => $path_mobile,
+                                    'url' => $banner_url,
+                                    'position' => $banner_position,
+                                    'views' => $banner_views,
+                                    'remaining_views' => $banner_views,
+                                    'init_date' => $banner_start_date,
+                                    'end_date' => $banner_end_date,
+                                    'active' => $banner_active
+                                )
                             );
 
-                            $attach_id = wp_insert_attachment($attachment, $filename);
-                            require_once ABSPATH . 'wp-admin/includes/image.php';
-                            $attach_data = wp_generate_attachment_metadata($attach_id, $filename);
-                            wp_update_attachment_metadata($attach_id, $attach_data);
-
-                            update_option('custom_banner_image_id', $attach_id);
+                            echo '<div class="alert alert-success">Datos guardados con éxito.</div>';
+                            // Se ejecuta un script para resetear el formulario y limpiar la previsualización
+                            echo '<script>document.addEventListener("DOMContentLoaded", function() { resetForm(); clearImagePreview(); });</script>';
+                        } else {
+                            echo '<div class="alert alert-danger">Error al subir las imágenes.</div>';
                         }
-
-                        echo '<div class="alert alert-success">Datos guardados con éxito.</div>';
-                        // Se ejecuta un script para resetear el formulario y limpiar la previsualización
-                        echo '<script>document.addEventListener("DOMContentLoaded", function() { resetForm(); clearImagePreview(); });</script>';
-                        
-                        // Se asignan valores vacíos para que el formulario aparezca limpio al recargar
-                        $banner_name         = '';
-                        $banner_description  = '';
-                        $banner_url          = '';
-                        $banner_position     = '';
-                        $banner_views        = '';
-                        $banner_start_date   = '';
-                        $banner_end_date     = '';
-                        $banner_active       = 0;
-                        $banner_id           = '';
-                        $banner_image_url    = '';
-                    } else {
-                        // Si no se envió el formulario, se recuperan las opciones guardadas
-                        /*$banner_name         = get_option('custom_banner_name', '');
-                        $banner_description  = get_option('custom_banner_description', '');
-                        $banner_url          = get_option('custom_banner_url', '');
-                        $banner_position     = get_option('custom_banner_position', '');
-                        $banner_views        = get_option('custom_banner_views', '');
-                        $banner_start_date   = get_option('custom_banner_start_date', '');
-                        $banner_end_date     = get_option('custom_banner_end_date', '');
-                        $banner_active       = get_option('custom_banner_active', 0);
-                        $banner_id           = get_option('custom_banner_image_id', '');
-                        $banner_image_url    = $banner_id ? wp_get_attachment_url($banner_id) : '';*/
                     }
                     ?>
 
@@ -88,53 +84,58 @@ function custom_banner_page() {
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="banner_name" class="form-label">Nombre</label>
-                                    <input type="text" name="banner_name" id="banner_name" value="<?php echo esc_attr($banner_name); ?>" class="form-control">
+                                    <label for="banner_name" class="form-label">Nombre *</label>
+                                    <input type="text" name="banner_name" id="banner_name" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="banner_description" class="form-label">Descripción</label>
-                                    <input type="text" name="banner_description" id="banner_description" value="<?php echo esc_attr($banner_description); ?>" class="form-control">
+                                    <label for="banner_views" class="form-label">Vistas</label>
+                                    <input type="number" name="banner_views" id="banner_views" class="form-control">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="banner_url" class="form-label">URL</label>
-                                    <input type="text" name="banner_url" id="banner_url" value="<?php echo esc_attr($banner_url); ?>" class="form-control">
+                                    <label for="banner_url" class="form-label">URL *</label>
+                                    <input type="text" name="banner_url" id="banner_url" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="banner_position" class="form-label">Posición</label>
-                                    <select name="banner_position" id="banner_position" class="form-select">
-                                        <option value="top" <?php selected($banner_position, 'top'); ?>>Arriba</option>
-                                        <option value="bottom" <?php selected($banner_position, 'bottom'); ?>>Abajo</option>
-                                        <option value="sidebar" <?php selected($banner_position, 'sidebar'); ?>>Barra Lateral</option>
+                                    <label for="banner_position" class="form-label">Posición *</label>
+                                    <select name="banner_position" id="banner_position" class="form-select" required>
+                                        <option value="top">Arriba</option>
+                                        <option value="bottom">Abajo</option>
+                                        <option value="sidebar">Barra Lateral</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="banner_views" class="form-label">Vistas</label>
-                                    <input type="number" name="banner_views" id="banner_views" value="<?php echo esc_attr($banner_views); ?>" class="form-control">
+                                    <label for="banner_description" class="form-label">Descripción *</label>
+                                    <input type="text" name="banner_description" id="banner_description" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="banner_start_date" class="form-label">Fecha Inicio</label>
-                                    <input type="date" name="banner_start_date" id="banner_start_date" value="<?php echo esc_attr($banner_start_date); ?>" class="form-control">
+                                    <input type="date" name="banner_start_date" id="banner_start_date" class="form-control">
                                 </div>
                                 <div class="mb-3">
                                     <label for="banner_end_date" class="form-label">Fecha Fin</label>
-                                    <input type="date" name="banner_end_date" id="banner_end_date" value="<?php echo esc_attr($banner_end_date); ?>" class="form-control">
+                                    <input type="date" name="banner_end_date" id="banner_end_date" class="form-control">
                                 </div>
+                            </div>
 
+                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="banner_image" class="form-label">Subir Imagen</label>
-                                    <input type="file" name="banner_image" id="banner_image" accept="image/*" class="form-control" onchange="previewImage(event)">
-                                    <div class="mt-3" id="image-preview">
-                                        <?php if ($banner_image_url) : ?>
-                                            <img src="<?php echo esc_url($banner_image_url); ?>" alt="Banner" class="img-thumbnail" style="max-width: 300px;">
-                                        <?php endif; ?>
-                                    </div>
+                                    <label for="banner_image_desktop" class="form-label">Subir imagen desktop *</label>
+                                    <input type="file" name="banner_image_desktop" id="banner_image_desktop" accept="image/*" class="form-control" onchange="previewImageDesktop(event)" required>
+                                    <div class="mt-3" id="image-preview-desktop"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="banner_image_mobile" class="form-label">Subir imagen mobile *</label>
+                                    <input type="file" name="banner_image_mobile" id="banner_image_mobile" accept="image/*" class="form-control" onchange="previewImageMobile(event)" required>
+                                    <div class="mt-3" id="image-preview-mobile"></div>
                                 </div>
                             </div>
                         </div>
-
 
                         <button type="submit" name="submit" class="btn btn-primary">Guardar banner</button>
                     </form>
@@ -145,7 +146,7 @@ function custom_banner_page() {
         <!-- Tabla de Banners -->
         <div class="card mt-5">
             <div class="card-header">
-                <h5 class="card-title">Banners Creados</h5>
+                <h5 class="card-title"><strong>Banners creados</strong></h5>
             </div>
             <div class="card-body">
                 <table class="table table-striped">
@@ -158,32 +159,37 @@ function custom_banner_page() {
                             <th>Vistas</th>
                             <th>Fecha Inicio</th>
                             <th>Fecha Fin</th>
+                            <th>Banner mobile</th>
+                            <th>Banner desktop</th>
                             <th>Activo</th>
-                            <th>Previsualización</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
                         // Obtener los banners guardados
-                        $banners = get_option('custom_banners', array());
+                        $banners = $wpdb->get_results("SELECT * FROM $table_name");
                         foreach ($banners as $banner) {
-                            $banner_image_url = wp_get_attachment_url($banner['image_id']);
                             ?>
                             <tr>
-                                <td><?php echo esc_html($banner['name']); ?></td>
-                                <td><?php echo esc_html($banner['description']); ?></td>
-                                <td><a href="<?php echo esc_url($banner['url']); ?>" target="_blank"><?php echo esc_html($banner['url']); ?></a></td>
-                                <td><?php echo esc_html($banner['position']); ?></td>
-                                <td><?php echo intval($banner['views']); ?></td>
-                                <td><?php echo esc_html($banner['start_date']); ?></td>
-                                <td><?php echo esc_html($banner['end_date']); ?></td>
+                                <td><?php echo esc_html($banner->name); ?></td>
+                                <td><?php echo esc_html($banner->description); ?></td>
+                                <td><a href="<?php echo esc_url($banner->url); ?>" target="_blank"><?php echo esc_html($banner->url); ?></a></td>
+                                <td><?php echo esc_html($banner->position); ?></td>
+                                <td><?php echo intval($banner->views); ?></td>
+                                <td><?php echo esc_html($banner->init_date); ?></td>
+                                <td><?php echo esc_html($banner->end_date); ?></td>
                                 <td>
-                                    <input type="checkbox" <?php checked($banner['active'], 1); ?> onclick="toggleBannerActive(<?php echo intval($banner['id']); ?>)">
+                                    <?php if ($banner->path_mobile) : ?>
+                                        <img src="<?php echo esc_url($banner->path_mobile); ?>" alt="BannerMobile" class="img-thumbnail" style="max-width: 100px;">
+                                    <?php endif; ?>
                                 </td>
                                 <td>
-                                    <?php if ($banner_image_url) : ?>
-                                        <img src="<?php echo esc_url($banner_image_url); ?>" alt="Banner" class="img-thumbnail" style="max-width: 100px;">
+                                    <?php if ($banner->path_desktop) : ?>
+                                        <img src="<?php echo esc_url($banner->path_desktop); ?>" alt="BannerDesktop" class="img-thumbnail" style="max-width: 100px;">
                                     <?php endif; ?>
+                                </td>
+                                <td>
+                                    <input type="checkbox" <?php checked($banner->active, 1); ?> onclick="toggleBannerActive(<?php echo intval($banner->ID); ?>)">
                                 </td>
                             </tr>
                             <?php
@@ -191,21 +197,42 @@ function custom_banner_page() {
                         ?>
                     </tbody>
                 </table>
+                <?php
+                // Mostrar paginación
+                $pagination_args = array(
+                    'total' => $total_pages,
+                    'current' => $current_page,
+                    'format' => '?paged=%#%',
+                    'prev_text' => __('&laquo; Anterior'),
+                    'next_text' => __('Siguiente &raquo;'),
+                );
+                echo paginate_links($pagination_args);
+                ?>
             </div>
         </div>
     </div>
     <script>
-        function previewImage(event) {
+        function previewImageDesktop(event) {
             var reader = new FileReader();
             reader.onload = function(){
-                var output = document.getElementById('image-preview');
+                var output = document.getElementById('image-preview-desktop');
+                output.innerHTML = '<img src="' + reader.result + '" alt="Banner" class="img-thumbnail" style="max-width: 300px;">';
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        function previewImageMobile(event) {
+            var reader = new FileReader();
+            reader.onload = function(){
+                var output = document.getElementById('image-preview-mobile');
                 output.innerHTML = '<img src="' + reader.result + '" alt="Banner" class="img-thumbnail" style="max-width: 300px;">';
             };
             reader.readAsDataURL(event.target.files[0]);
         }
 
         function clearImagePreview() {
-            document.getElementById('image-preview').innerHTML = '';
+            document.getElementById('image-preview-desktop').innerHTML = '';
+            document.getElementById('image-preview-mobile').innerHTML = '';
         }
 
         function resetForm() {

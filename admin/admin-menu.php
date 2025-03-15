@@ -16,15 +16,6 @@ function custom_banner_plugin_menu() {
         20
     );
 
-    add_submenu_page(
-        'custom_banner',
-        'Dynamic Banners',
-        'Dynamic Banners',
-        'manage_options',
-        'dynamic_banner',
-        'dynamic_banner_page'
-    );
 }
 
 require_once plugin_dir_path(__FILE__) . 'pages/banner.php';
-require_once plugin_dir_path(__FILE__) . 'pages/dynamic-banner.php';
