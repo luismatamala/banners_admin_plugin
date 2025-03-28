@@ -31,6 +31,7 @@ function custom_banner_page() {
                     <?php
                     // Si se envió el formulario...
                     if (isset($_POST['submit'])) {
+                        echo '<div class="alert alert-info">'.$banner_start_date.'</div>';
                         $banner_name = sanitize_text_field($_POST['banner_name']);
                         $banner_description = sanitize_text_field($_POST['banner_description']);
                         $banner_url = esc_url_raw($_POST['banner_url']);
@@ -39,6 +40,7 @@ function custom_banner_page() {
                         $banner_start_date = sanitize_text_field($_POST['banner_start_date']);
                         $banner_end_date = sanitize_text_field($_POST['banner_end_date']);
                         $banner_active = 1;
+                        $country = sanitize_text_field($_POST['country']);
 
                         if (!function_exists('wp_handle_upload')) {
                             require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -50,7 +52,9 @@ function custom_banner_page() {
                         $movefile_desktop = wp_handle_upload($uploadedfile_desktop, $upload_overrides);
                         $movefile_mobile = wp_handle_upload($uploadedfile_mobile, $upload_overrides);
 
-                        if ($movefile_desktop && !isset($movefile_desktop['error']) && $movefile_mobile && !isset($movefile_mobile['error'])) {
+                        if (isset($movefile_desktop['type']) && strpos($movefile_desktop['type'], 'image') !== false && 
+                            isset($movefile_mobile['type']) && strpos($movefile_mobile['type'], 'image') !== false) {
+
                             $path_desktop = $movefile_desktop['url'];
                             $path_mobile = $movefile_mobile['url'];
 
@@ -65,17 +69,16 @@ function custom_banner_page() {
                                     'position' => $banner_position,
                                     'views' => $banner_views,
                                     'remaining_views' => $banner_views,
-                                    'init_date' => $banner_start_date,
-                                    'end_date' => $banner_end_date,
+                                    'country' => $country,
+                                    'init_date' => $banner_start_date ? $banner_start_date : null,
+                                    'end_date' => $banner_end_date ? $banner_end_date : null,
                                     'active' => $banner_active
                                 )
                             );
 
                             echo '<div class="alert alert-success">Datos guardados con éxito.</div>';
-                            // Se ejecuta un script para resetear el formulario y limpiar la previsualización
-                            echo '<script>document.addEventListener("DOMContentLoaded", function() { resetForm(); clearImagePreview(); });</script>';
                         } else {
-                            echo '<div class="alert alert-danger">Error al subir las imágenes.</div>';
+                            echo '<div class="alert alert-danger">Error al subir las imágenes. Asegúrese de que son archivos de imagen válidos.</div>';
                         }
                     }
                     ?>
@@ -107,7 +110,7 @@ function custom_banner_page() {
 
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="banner_description" class="form-label">Descripción *</label>
+                                    <label for="banner_description" class="form-label">Descripción</label>
                                     <input type="text" name="banner_description" id="banner_description" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
@@ -117,6 +120,19 @@ function custom_banner_page() {
                                 <div class="mb-3">
                                     <label for="banner_end_date" class="form-label">Fecha Fin</label>
                                     <input type="date" name="banner_end_date" id="banner_end_date" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="country" class="form-label">País *</label>
+                                    <select name="country" id="country" class="form-select" required>
+                                        <option value="CL">Chile</option>
+                                        <option value="AR">Argentina</option>
+                                        <option value="PE">Perú</option>
+                                        <option value="CO">Colombia</option>
+                                        <option value="UY">Uruguay</option>
+                                        <option value="PY">Paraguay</option>
+                                        <option value="BR">Brasil</option>
+                                        <option value="EC">Ecuador</option>
+                                    </select>
                                 </div>
                             </div>
 
@@ -149,35 +165,44 @@ function custom_banner_page() {
                 <h5 class="card-title"><strong>Banners creados</strong></h5>
             </div>
             <div class="card-body">
-                <table class="table table-striped">
+                <table id="banners-table" class="table table-bordered">
                     <thead>
                         <tr>
                             <th>Nombre</th>
-                            <th>Descripción</th>
+                            <!-- <th>Desc.</th> -->
                             <th>URL</th>
                             <th>Posición</th>
                             <th>Vistas</th>
+                            <th>Vistas pend.</th>
                             <th>Fecha Inicio</th>
                             <th>Fecha Fin</th>
-                            <th>Banner mobile</th>
-                            <th>Banner desktop</th>
+                            <th>País</th>
+                            <th>Banner mob.</th>
+                            <th>Banner desk.</th>
                             <th>Activo</th>
+                            <th>Eliminar</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
                         // Obtener los banners guardados
-                        $banners = $wpdb->get_results("SELECT * FROM $table_name");
+                        $banners = $wpdb->get_results("SELECT * FROM $table_name LIMIT $offset, $items_per_page");
                         foreach ($banners as $banner) {
                             ?>
                             <tr>
                                 <td><?php echo esc_html($banner->name); ?></td>
-                                <td><?php echo esc_html($banner->description); ?></td>
+                                <!-- <td><?php echo esc_html($banner->description); ?></td> -->
                                 <td><a href="<?php echo esc_url($banner->url); ?>" target="_blank"><?php echo esc_html($banner->url); ?></a></td>
                                 <td><?php echo esc_html($banner->position); ?></td>
                                 <td><?php echo intval($banner->views); ?></td>
-                                <td><?php echo esc_html($banner->init_date); ?></td>
-                                <td><?php echo esc_html($banner->end_date); ?></td>
+                                <td><?php echo intval($banner->remaining_views); ?></td>
+                                <td>
+                                    <?php echo !empty($banner->init_date) ? date('d-m-Y', strtotime($banner->init_date)) : ''; ?>
+                                </td>
+                                <td>
+                                    <?php echo !empty($banner->end_date) ? date('d-m-Y', strtotime($banner->end_date)) : ''; ?>
+                                </td>
+                                <td><?php echo esc_html($banner->country); ?></td>
                                 <td>
                                     <?php if ($banner->path_mobile) : ?>
                                         <img src="<?php echo esc_url($banner->path_mobile); ?>" alt="BannerMobile" class="img-thumbnail" style="max-width: 100px;">
@@ -189,7 +214,10 @@ function custom_banner_page() {
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <input type="checkbox" <?php checked($banner->active, 1); ?> onclick="toggleBannerActive(<?php echo intval($banner->ID); ?>)">
+                                <input type="checkbox" <?php checked($banner->active, 1); ?> onclick="toggleBannerActive(<?php echo intval($banner->ID); ?>, <?php echo intval(!$banner->active); ?>)">
+                                </td>
+                                <td>
+                                    <button class="btn btn-danger delete-banner" data-id="<?php echo intval($banner->ID); ?>">Borrar</button>
                                 </td>
                             </tr>
                             <?php
@@ -205,12 +233,18 @@ function custom_banner_page() {
                     'format' => '?paged=%#%',
                     'prev_text' => __('&laquo; Anterior'),
                     'next_text' => __('Siguiente &raquo;'),
+                    'type' => 'list', // Esto mejora el formato de la paginación
                 );
-                echo paginate_links($pagination_args);
+                echo '<div class="pagination">' . paginate_links($pagination_args) . '</div>';
                 ?>
             </div>
         </div>
     </div>
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
     <script>
         function previewImageDesktop(event) {
             var reader = new FileReader();
@@ -235,15 +269,58 @@ function custom_banner_page() {
             document.getElementById('image-preview-mobile').innerHTML = '';
         }
 
-        function resetForm() {
-            document.getElementById('banner-form').reset();
+        function toggleBannerActive(bannerId, checked) {
+            console.log("checked", checked);
+            $.ajax({
+                url: "<?php echo admin_url('admin-ajax.php'); ?>",
+                type: 'POST',
+                data: {
+                    action: 'toggle_banner_active',
+                    banner_id: bannerId,
+                    checked: checked
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.data.message);
+                    }
+                }
+            });
         }
 
-        function toggleBannerActive(bannerId) {
-            // Aquí puedes agregar la lógica para activar/desactivar el banner
-            // Por ejemplo, usando AJAX para actualizar el estado en la base de datos
-        }
+        jQuery(document).ready(function($){
+            $('#banners-table').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+                },
+                "pageLength": 5
+            });
+
+            $('.delete-banner').click(function(){
+                var bannerId = $(this).data('id');
+                if (confirm('¿Estás seguro de que quieres eliminar este banner?')) {
+                    $.ajax({
+                        url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                        type: 'POST',
+                        data: {
+                            action: 'delete_banner',
+                            banner_id: bannerId
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert(response.data.message);
+                                location.reload();
+                            } else {
+                                alert('Error: ' + response.data.message);
+                            }
+                        }
+                    });
+                }
+            });
+        });
     </script>
-    <?php
+<?php
 }
 ?>
