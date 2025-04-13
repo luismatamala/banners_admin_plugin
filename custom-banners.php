@@ -125,7 +125,6 @@ function toggle_banner_active_callback() {
     wp_die(); // Finaliza la ejecución del script de AJAX
 }
 
-// Añade este código en el archivo functions.php de tu tema o en un plugin personalizado
 add_action('rest_api_init', function () {
     //http://local.jetsmart.com/wp-json/banners/v1/all
     register_rest_route('banners/v1', '/all', array(
@@ -154,6 +153,27 @@ add_action('rest_api_init', function () {
             )
         )
     ));
+
+    //http://local.jetsmart.com/wp-json/banners/v1/get-banner?country=CL&position=top-banner
+    register_rest_route('banners/v1', '/get-banner', array(
+        'methods'  => 'GET',
+        'callback' => 'get_banner_by_country_and_position',
+        'permission_callback' => '__return_true',
+        'args' => array(
+            'country' => array(
+                'required' => true,
+                'validate_callback' => function($param) {
+                    return is_string($param);
+                }
+            ),
+            'position' => array(
+                'required' => true,
+                'validate_callback' => function($param) {
+                    return is_string($param);
+                }
+            )
+        )
+    ));
 });
 
 function get_all_banners() {
@@ -176,10 +196,7 @@ function get_active_banners() {
     
     $results = $wpdb->get_results($wpdb->prepare(
         "SELECT * FROM $table_name 
-        WHERE active = 1 
-        AND (init_date <= %s OR init_date IS NULL) 
-        AND (end_date >= %s OR end_date IS NULL)",
-        $current_date, $current_date
+        WHERE active = 1"
     ));
     
     if (empty($results)) {
@@ -233,4 +250,28 @@ function decrement_banner_views(WP_REST_Request $request) {
         'remaining_views' => (int)$updated_views,
         'message' => 'Remaining views decremented successfully'
     );
+}
+
+function get_banner_by_country_and_position($request) {
+    $country = $request->get_param('country');
+    $position = $request->get_param('position');
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'banners';
+    $current_date = current_time('mysql');
+
+    $results = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $table_name 
+        WHERE active = 1
+        AND remaining_views > 0
+        AND country = %s
+        AND position = %s",
+        $country, $position
+    ));
+
+    if (empty($results)) {
+        return new WP_Error('no_active_banners', 'No active banners found for given parameters', array('status' => 404));
+    }
+
+    return rest_ensure_response($results);
 }

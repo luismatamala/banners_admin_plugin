@@ -91,7 +91,7 @@ function custom_banner_page() {
                                     <input type="text" name="banner_name" id="banner_name" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="banner_views" class="form-label">Vistas</label>
+                                    <label for="banner_views" class="form-label">Vistas *</label>
                                     <input type="number" name="banner_views" id="banner_views" class="form-control">
                                 </div>
                                 <div class="mb-3">
@@ -217,7 +217,7 @@ function custom_banner_page() {
                                 <input type="checkbox" <?php checked($banner->active, 1); ?> onclick="toggleBannerActive(<?php echo intval($banner->ID); ?>, <?php echo intval(!$banner->active); ?>)">
                                 </td>
                                 <td>
-                                    <button class="btn btn-danger delete-banner" data-id="<?php echo intval($banner->ID); ?>">Borrar</button>
+                                    <button class="btn btn-danger delete-banner" data-id="<?php echo intval($banner->ID); ?>">X</button>
                                 </td>
                             </tr>
                             <?php
