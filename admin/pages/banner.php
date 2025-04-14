@@ -31,7 +31,6 @@ function custom_banner_page() {
                     <?php
                     // Si se envió el formulario...
                     if (isset($_POST['submit'])) {
-                        echo '<div class="alert alert-info">'.$banner_start_date.'</div>';
                         $banner_name = sanitize_text_field($_POST['banner_name']);
                         $banner_description = sanitize_text_field($_POST['banner_description']);
                         $banner_url = esc_url_raw($_POST['banner_url']);
@@ -91,7 +90,7 @@ function custom_banner_page() {
                                     <input type="text" name="banner_name" id="banner_name" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="banner_views" class="form-label">Vistas *</label>
+                                    <label for="banner_views" class="form-label">Vistas</label>
                                     <input type="number" name="banner_views" id="banner_views" class="form-control">
                                 </div>
                                 <div class="mb-3">

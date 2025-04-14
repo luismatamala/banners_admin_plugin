@@ -265,7 +265,6 @@ function get_banner_by_country_and_position($request) {
     $results = $wpdb->get_results($wpdb->prepare(
         "SELECT * FROM $table_name 
         WHERE active = 1
-        AND remaining_views > 0
         AND country = %s
         AND position = %s
         AND (
