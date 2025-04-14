@@ -84,7 +84,7 @@ function delete_banner_callback() {
         wp_send_json_error(array('message' => 'Error al eliminar.'));
     }
 
-    wp_die(); // Finaliza la ejecución del script de AJAX
+    wp_die();
 }
 
 // Acción para manejar la eliminación de banners vía AJAX
@@ -258,15 +258,23 @@ function get_banner_by_country_and_position($request) {
 
     global $wpdb;
     $table_name = $wpdb->prefix . 'banners';
-    $current_date = current_time('mysql');
+
+    // Obtener solo la fecha sin hora
+    $current_date = current_time('Y-m-d');
 
     $results = $wpdb->get_results($wpdb->prepare(
         "SELECT * FROM $table_name 
         WHERE active = 1
         AND remaining_views > 0
         AND country = %s
-        AND position = %s",
-        $country, $position
+        AND position = %s
+        AND (
+            (init_date IS NULL AND end_date IS NULL)
+            OR (init_date IS NOT NULL AND end_date IS NOT NULL AND %s BETWEEN DATE(init_date) AND DATE(end_date))
+            OR (init_date IS NOT NULL AND end_date IS NULL AND DATE(init_date) <= %s)
+            OR (init_date IS NULL AND end_date IS NOT NULL AND DATE(end_date) >= %s)
+        )",
+        $country, $position, $current_date, $current_date, $current_date
     ));
 
     if (empty($results)) {
