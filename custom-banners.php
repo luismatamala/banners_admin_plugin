@@ -282,3 +282,83 @@ function get_banner_by_country_and_position($request) {
 
     return rest_ensure_response($results);
 }
+
+// Obtener datos del banner
+add_action('wp_ajax_get_banner', 'get_banner_callback');
+function get_banner_callback() {
+    global $wpdb;
+
+    $banner_id = intval($_POST['banner_id']);
+    $table_name = $wpdb->prefix . 'banners';
+
+    $banner = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE ID = %d", $banner_id));
+
+    if ($banner) {
+        wp_send_json_success(array(
+            'ID' => $banner->ID,
+            'name' => $banner->name,
+            'url' => $banner->url,
+            'position' => $banner->position,
+            'views' => $banner->views,
+            'init_date' => $banner->init_date ? date('Y-m-d', strtotime($banner->init_date)) : '',
+            'end_date' => $banner->end_date ? date('Y-m-d', strtotime($banner->end_date)) : '',
+            'country' => $banner->country,
+            'path_mobile' => $banner->path_mobile,
+            'path_desktop' => $banner->path_desktop
+        ));
+    } else {
+        wp_send_json_error(array('message' => 'Banner no encontrado.'));
+    }
+}
+
+// Actualizar datos del banner
+add_action('wp_ajax_update_banner', 'update_banner_callback');
+function update_banner_callback() {
+    global $wpdb;
+
+    $banner_id = intval($_POST['banner_id']);
+    $table_name = $wpdb->prefix . 'banners';
+
+    // Manejar las imágenes
+    $banner_mobile = '';
+    $banner_desktop = '';
+
+    if (!empty($_FILES['banner_image_mobile']['name'])) {
+        $uploaded_mobile = wp_handle_upload($_FILES['banner_image_mobile'], array('test_form' => false));
+        if (isset($uploaded_mobile['url'])) {
+            $banner_mobile = $uploaded_mobile['url'];
+        }
+    }
+
+    if (!empty($_FILES['banner_image_desktop']['name'])) {
+        $uploaded_desktop = wp_handle_upload($_FILES['banner_image_desktop'], array('test_form' => false));
+        if (isset($uploaded_desktop['url'])) {
+            $banner_desktop = $uploaded_desktop['url'];
+        }
+    }
+
+    // Actualizar los datos del banner
+    $updated = $wpdb->update(
+        $table_name,
+        array(
+            'name' => sanitize_text_field($_POST['banner_name']),
+            'url' => esc_url_raw($_POST['banner_url']),
+            'position' => sanitize_text_field($_POST['banner_position']),
+            'views' => intval($_POST['banner_views']),
+            'init_date' => sanitize_text_field($_POST['banner_start_date']),
+            'end_date' => sanitize_text_field($_POST['banner_end_date']),
+            'country' => sanitize_text_field($_POST['country']),
+            'path_mobile' => $banner_mobile ?: null,
+            'path_desktop' => $banner_desktop ?: null
+        ),
+        array('ID' => $banner_id),
+        array('%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s'),
+        array('%d')
+    );
+
+    if ($updated !== false) {
+        wp_send_json_success(array('message' => 'Banner actualizado con éxito.'));
+    } else {
+        wp_send_json_error(array('message' => 'Error al actualizar el banner.'));
+    }
+}

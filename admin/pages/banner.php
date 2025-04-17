@@ -164,11 +164,10 @@ function custom_banner_page() {
                 <h5 class="card-title"><strong>Banners creados</strong></h5>
             </div>
             <div class="card-body">
-                <table id="banners-table" class="table table-bordered">
+                <table id="banners-table" class="table table-bordered table-responsive table-striped">
                     <thead>
                         <tr>
                             <th>Nombre</th>
-                            <!-- <th>Desc.</th> -->
                             <th>URL</th>
                             <th>Posición</th>
                             <th>Vistas</th>
@@ -178,8 +177,9 @@ function custom_banner_page() {
                             <th>País</th>
                             <th>Banner mob.</th>
                             <th>Banner desk.</th>
-                            <th>Activo</th>
-                            <th>Eliminar</th>
+                            <th>Editar</th>
+                            <!-- <th>Activo</th>
+                            <th>Eliminar</th> -->
                         </tr>
                     </thead>
                     <tbody>
@@ -190,8 +190,11 @@ function custom_banner_page() {
                             ?>
                             <tr>
                                 <td><?php echo esc_html($banner->name); ?></td>
-                                <!-- <td><?php echo esc_html($banner->description); ?></td> -->
-                                <td><a href="<?php echo esc_url($banner->url); ?>" target="_blank"><?php echo esc_html($banner->url); ?></a></td>
+                                <td>
+                                    <a href="<?php echo esc_url($banner->url); ?>" target="_blank" title="<?php echo esc_attr($banner->url); ?>" class="table-url">
+                                        <?php echo esc_html($banner->url); ?>
+                                    </a>
+                                </td>
                                 <td><?php echo esc_html($banner->position); ?></td>
                                 <td><?php echo intval($banner->views); ?></td>
                                 <td><?php echo intval($banner->remaining_views); ?></td>
@@ -213,11 +216,14 @@ function custom_banner_page() {
                                     <?php endif; ?>
                                 </td>
                                 <td>
+                                    <button class="btn btn-success edit-banner" data-id="<?php echo intval($banner->ID); ?>">Editar</button>
+                                </td>
+                                <!--<td>
                                 <input type="checkbox" <?php checked($banner->active, 1); ?> onclick="toggleBannerActive(<?php echo intval($banner->ID); ?>, <?php echo intval(!$banner->active); ?>)">
                                 </td>
                                 <td>
                                     <button class="btn btn-danger delete-banner" data-id="<?php echo intval($banner->ID); ?>">X</button>
-                                </td>
+                                </td> -->
                             </tr>
                             <?php
                         }
@@ -236,6 +242,86 @@ function custom_banner_page() {
                 );
                 echo '<div class="pagination">' . paginate_links($pagination_args) . '</div>';
                 ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar banner -->
+    <!-- Modal para editar banner -->
+    <div class="modal fade" id="editBannerModal" tabindex="-1" aria-labelledby="editBannerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBannerModalLabel">Editar Banner</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-banner-form" enctype="multipart/form-data">
+                        <input type="hidden" name="banner_id" id="edit-banner-id">
+                        
+                        <div class="mb-3">
+                            <label for="edit-banner-name" class="form-label">Nombre</label>
+                            <input type="text" name="banner_name" id="edit-banner-name" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-banner-url" class="form-label">URL</label>
+                            <input type="text" name="banner_url" id="edit-banner-url" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-banner-position" class="form-label">Posición</label>
+                            <select name="banner_position" id="edit-banner-position" class="form-select" required>
+                                <option value="top">Arriba</option>
+                                <option value="bottom">Abajo</option>
+                                <option value="sidebar">Barra Lateral</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-banner-views" class="form-label">Vistas</label>
+                            <input type="number" name="banner_views" id="edit-banner-views" class="form-control">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-banner-start-date" class="form-label">Fecha Inicio</label>
+                            <input type="date" name="banner_start_date" id="edit-banner-start-date" class="form-control">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-banner-end-date" class="form-label">Fecha Fin</label>
+                            <input type="date" name="banner_end_date" id="edit-banner-end-date" class="form-control">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-banner-country" class="form-label">País</label>
+                            <select name="country" id="edit-banner-country" class="form-select" required>
+                                <option value="CL">Chile</option>
+                                <option value="AR">Argentina</option>
+                                <option value="PE">Perú</option>
+                                <option value="CO">Colombia</option>
+                                <option value="UY">Uruguay</option>
+                                <option value="PY">Paraguay</option>
+                                <option value="BR">Brasil</option>
+                                <option value="EC">Ecuador</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit-banner-mobile" class="form-label">Banner Mobile</label>
+                            <input type="file" name="banner_image_mobile" id="edit-banner-mobile" class="form-control">
+                            <div id="edit-banner-mobile-preview" class="mt-2"></div> <!-- Contenedor para la imagen actual -->
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-banner-desktop" class="form-label">Banner Desktop</label>
+                            <input type="file" name="banner_image_desktop" id="edit-banner-desktop" class="form-control">
+                            <div id="edit-banner-desktop-preview" class="mt-2"></div> <!-- Contenedor para la imagen actual -->
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -316,6 +402,80 @@ function custom_banner_page() {
                             }
                         }
                     });
+                }
+            });
+        });
+
+        // Abrir el modal de edición con los datos del banner
+        $('.edit-banner').click(function () {
+            var bannerId = $(this).data('id');
+
+            // Obtener los datos del banner desde el servidor
+            $.ajax({
+                url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                type: 'POST',
+                data: {
+                    action: 'get_banner',
+                    banner_id: bannerId
+                },
+                success: function (response) {
+                    if (response.success) {
+                        // Llenar el formulario del modal con los datos del banner
+                        $('#edit-banner-id').val(response.data.ID);
+                        $('#edit-banner-name').val(response.data.name);
+                        $('#edit-banner-url').val(response.data.url);
+                        $('#edit-banner-position').val(response.data.position);
+                        $('#edit-banner-views').val(response.data.views);
+                        $('#edit-banner-start-date').val(response.data.init_date);
+                        $('#edit-banner-end-date').val(response.data.end_date);
+                        $('#edit-banner-country').val(response.data.country);
+
+                        // Mostrar las imágenes actuales
+                        if (response.data.path_mobile) {
+                            $('#edit-banner-mobile-preview').html(
+                                '<img src="' + response.data.path_mobile + '" alt="Banner Mobile" class="img-thumbnail" style="max-width: 150px;">'
+                            );
+                        } else {
+                            $('#edit-banner-mobile-preview').html('<p>No hay imagen móvil.</p>');
+                        }
+
+                        if (response.data.path_desktop) {
+                            $('#edit-banner-desktop-preview').html(
+                                '<img src="' + response.data.path_desktop + '" alt="Banner Desktop" class="img-thumbnail" style="max-width: 150px;">'
+                            );
+                        } else {
+                            $('#edit-banner-desktop-preview').html('<p>No hay imagen de escritorio.</p>');
+                        }
+
+                        // Mostrar el modal
+                        $('#editBannerModal').modal('show');
+                    } else {
+                        alert('Error: ' + response.data.message);
+                    }
+                }
+            });
+        });
+
+        // Enviar los cambios al servidor
+        $('#edit-banner-form').submit(function (e) {
+            e.preventDefault();
+
+            var formData = new FormData(this);
+            formData.append('action', 'update_banner'); // Agregar el action aquí
+
+            $.ajax({
+                url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.data.message);
+                        location.reload(); // Recargar la página para reflejar los cambios
+                    } else {
+                        alert('Error: ' + response.data.message);
+                    }
                 }
             });
         });

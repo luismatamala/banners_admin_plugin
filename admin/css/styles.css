@@ -5,3 +5,21 @@
 .wp-core-ui select {
     max-width: unset !important;
 }
+
+.card {
+    max-width: unset !important;
+    overflow-x: auto; /* Habilita el scroll horizontal */
+    -webkit-overflow-scrolling: touch; /* Desplazamiento suave en dispositivos móviles */
+}
+
+.wp-core-ui select {
+    max-width: unset !important;
+}
+
+.table-url {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 190px; /* Ajusta el ancho según sea necesario */
+}
