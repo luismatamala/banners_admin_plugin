@@ -304,7 +304,8 @@ function get_banner_callback() {
             'end_date' => $banner->end_date ? date('Y-m-d', strtotime($banner->end_date)) : '',
             'country' => $banner->country,
             'path_mobile' => $banner->path_mobile,
-            'path_desktop' => $banner->path_desktop
+            'path_desktop' => $banner->path_desktop,
+            'active' => $banner->active
         ));
     } else {
         wp_send_json_error(array('message' => 'Banner no encontrado.'));
@@ -313,52 +314,114 @@ function get_banner_callback() {
 
 // Actualizar datos del banner
 add_action('wp_ajax_update_banner', 'update_banner_callback');
+
 function update_banner_callback() {
     global $wpdb;
-
-    $banner_id = intval($_POST['banner_id']);
     $table_name = $wpdb->prefix . 'banners';
 
-    // Manejar las imágenes
+    $banner_id = intval($_POST['banner_id']);
+    if (!$banner_id) {
+        wp_send_json_error(array('message' => 'ID de banner no válido.'));
+    }
+
+    // Cargar funciones de manejo de archivos si es necesario
+    if (!function_exists('wp_handle_upload')) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+    }
+
+    $upload_overrides = array('test_form' => false);
     $banner_mobile = '';
     $banner_desktop = '';
 
-    if (!empty($_FILES['banner_image_mobile']['name'])) {
-        $uploaded_mobile = wp_handle_upload($_FILES['banner_image_mobile'], array('test_form' => false));
-        if (isset($uploaded_mobile['url'])) {
-            $banner_mobile = $uploaded_mobile['url'];
+    // Procesar imagen móvil si se cargó
+    if (isset($_FILES['banner_image_mobile']) && !empty($_FILES['banner_image_mobile']['name'])) {
+        $uploaded_mobile = $_FILES['banner_image_mobile'];
+        $movefile_mobile = wp_handle_upload($uploaded_mobile, $upload_overrides);
+
+        if (isset($movefile_mobile['type']) && strpos($movefile_mobile['type'], 'image') !== false) {
+            $banner_mobile = $movefile_mobile['url'];
+        } else {
+            wp_send_json_error(array('message' => 'Error al subir imagen móvil.'));
         }
     }
 
-    if (!empty($_FILES['banner_image_desktop']['name'])) {
-        $uploaded_desktop = wp_handle_upload($_FILES['banner_image_desktop'], array('test_form' => false));
-        if (isset($uploaded_desktop['url'])) {
-            $banner_desktop = $uploaded_desktop['url'];
+    // Procesar imagen desktop si se cargó
+    if (isset($_FILES['banner_image_desktop']) && !empty($_FILES['banner_image_desktop']['name'])) {
+        $uploaded_desktop = $_FILES['banner_image_desktop'];
+        $movefile_desktop = wp_handle_upload($uploaded_desktop, $upload_overrides);
+
+        if (isset($movefile_desktop['type']) && strpos($movefile_desktop['type'], 'image') !== false) {
+            $banner_desktop = $movefile_desktop['url'];
+        } else {
+            wp_send_json_error(array('message' => 'Error al subir imagen desktop.'));
         }
     }
 
-    // Actualizar los datos del banner
+    // Capturar el estado del checkbox activo
+    $active = isset($_POST['banner_active']) ? 1 : 0;
+
+    // Preparar datos base
+    $data = array(
+        'name' => sanitize_text_field($_POST['banner_name']),
+        'url' => esc_url_raw($_POST['banner_url']),
+        'position' => sanitize_text_field($_POST['banner_position']),
+        'views' => intval($_POST['banner_views']),
+        'init_date' => sanitize_text_field($_POST['banner_start_date']),
+        'end_date' => sanitize_text_field($_POST['banner_end_date']),
+        'country' => sanitize_text_field($_POST['country']),
+        'active' => $active
+    );
+
+    $formats = array('%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d');
+
+    // Incluir imágenes solo si se subieron
+    if (!empty($banner_mobile)) {
+        $data['path_mobile'] = $banner_mobile;
+        $formats[] = '%s';
+    }
+
+    if (!empty($banner_desktop)) {
+        $data['path_desktop'] = $banner_desktop;
+        $formats[] = '%s';
+    }
+
     $updated = $wpdb->update(
         $table_name,
-        array(
-            'name' => sanitize_text_field($_POST['banner_name']),
-            'url' => esc_url_raw($_POST['banner_url']),
-            'position' => sanitize_text_field($_POST['banner_position']),
-            'views' => intval($_POST['banner_views']),
-            'init_date' => sanitize_text_field($_POST['banner_start_date']),
-            'end_date' => sanitize_text_field($_POST['banner_end_date']),
-            'country' => sanitize_text_field($_POST['country']),
-            'path_mobile' => $banner_mobile ?: null,
-            'path_desktop' => $banner_desktop ?: null
-        ),
+        $data,
         array('ID' => $banner_id),
-        array('%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s'),
+        $formats,
         array('%d')
     );
 
     if ($updated !== false) {
-        wp_send_json_success(array('message' => 'Banner actualizado con éxito.'));
+        wp_send_json_success(array('message' => 'Banner actualizado correctamente.'));
     } else {
-        wp_send_json_error(array('message' => 'Error al actualizar el banner.'));
+        wp_send_json_error(array('message' => 'No se pudo actualizar el banner o no hubo cambios.'));
+    }
+}
+
+add_action('wp_ajax_update_banner_active_state', 'update_banner_active_state_callback');
+
+function update_banner_active_state_callback() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'banners';
+
+    $banner_id = intval($_POST['banner_id']);
+    $active = intval($_POST['active']);
+
+    if (!$banner_id) {
+        wp_send_json_error(array('message' => 'ID inválido.'));
+    }
+
+    $updated = $wpdb->update(
+        $table_name,
+        array('active' => $active),
+        array('ID' => $banner_id)
+    );
+
+    if ($updated !== false) {
+        wp_send_json_success(array('message' => 'Estado actualizado correctamente.'));
+    } else {
+        wp_send_json_error(array('message' => 'No se pudo actualizar el estado.'));
     }
 }
