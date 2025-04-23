@@ -171,6 +171,12 @@ add_action('rest_api_init', function () {
                 'validate_callback' => function($param) {
                     return is_string($param);
                 }
+            ),
+            'banner_id' => array(
+                'required' => false,
+                'validate_callback' => function($param) {
+                    return is_numeric($param) || is_null($param);
+                }
             )
         )
     ));
@@ -253,18 +259,18 @@ function decrement_banner_views(WP_REST_Request $request) {
 }
 
 function get_banner_by_country_and_position($request) {
-    $country = $request->get_param('country');
-    $position = $request->get_param('position');
-
     global $wpdb;
-    $table_name = $wpdb->prefix . 'banners';
 
-    // Obtener solo la fecha sin hora
+    $country    = $request->get_param('country');
+    $position   = $request->get_param('position');
+    $banner_id  = $request->get_param('banner_id');
+    $table_name = $wpdb->prefix . 'banners';
     $current_date = current_time('Y-m-d');
 
-    $results = $wpdb->get_results($wpdb->prepare(
-        "SELECT * FROM $table_name 
+    // Query base con filtros comunes
+    $query_base = "FROM $table_name 
         WHERE active = 1
+        AND remaining_views > 0
         AND country = %s
         AND position = %s
         AND (
@@ -272,15 +278,46 @@ function get_banner_by_country_and_position($request) {
             OR (init_date IS NOT NULL AND end_date IS NOT NULL AND %s BETWEEN DATE(init_date) AND DATE(end_date))
             OR (init_date IS NOT NULL AND end_date IS NULL AND DATE(init_date) <= %s)
             OR (init_date IS NULL AND end_date IS NOT NULL AND DATE(end_date) >= %s)
-        )",
-        $country, $position, $current_date, $current_date, $current_date
-    ));
+        )";
 
-    if (empty($results)) {
-        return new WP_Error('no_active_banners', 'No active banners found for given parameters', array('status' => 404));
+    // Parámetros comunes para prepare
+    $params = [$country, $position, $current_date, $current_date, $current_date];
+
+    try {
+        if (empty($banner_id)) {
+            // 🚀 Banner aleatorio
+            $query = "SELECT * $query_base ORDER BY RAND() LIMIT 1";
+            $results = $wpdb->get_results($wpdb->prepare($query, ...$params));
+        } else {
+            $banner_id = intval($banner_id);
+
+            // 🔍 Buscar siguiente ID mayor
+            $query_next = "SELECT * $query_base AND ID > %d ORDER BY ID ASC LIMIT 1";
+            $results = $wpdb->get_results($wpdb->prepare($query_next, ...array_merge($params, [$banner_id])));
+
+            // 🔁 Si no hay uno mayor, buscar el menor distinto
+            if (empty($results)) {
+                $query_fallback = "SELECT * $query_base AND ID != %d ORDER BY ID ASC LIMIT 1";
+                $results = $wpdb->get_results($wpdb->prepare($query_fallback, ...array_merge($params, [$banner_id])));
+
+                // 🟨 Si tampoco hay otro, mostrar el mismo (si existe)
+                if (empty($results)) {
+                    $query_same = "SELECT * $query_base AND ID = %d LIMIT 1";
+                    $results = $wpdb->get_results($wpdb->prepare($query_same, ...array_merge($params, [$banner_id])));
+                }
+            }
+        }
+
+        if (empty($results)) {
+            return new WP_Error('no_active_banners', 'No active banners found for given parameters', array('status' => 404));
+        }
+
+        return rest_ensure_response($results[0]); // solo uno
+
+    } catch (Exception $e) {
+        error_log('🔴 Error en get_banner_by_country_and_position: ' . $e->getMessage());
+        return new WP_Error('server_error', 'Ocurrió un error inesperado', array('status' => 500));
     }
-
-    return rest_ensure_response($results);
 }
 
 // Obtener datos del banner
@@ -300,8 +337,8 @@ function get_banner_callback() {
             'url' => $banner->url,
             'position' => $banner->position,
             'views' => $banner->views,
-            'init_date' => $banner->init_date ? date('Y-m-d', strtotime($banner->init_date)) : null,
-            'end_date' => $banner->end_date ? date('Y-m-d', strtotime($banner->end_date)) : null,
+            'init_date' => $banner->init_date ? date('Y-m-d', strtotime($banner->init_date)) : '',
+            'end_date' => $banner->end_date ? date('Y-m-d', strtotime($banner->end_date)) : '',
             'country' => $banner->country,
             'path_mobile' => $banner->path_mobile,
             'path_desktop' => $banner->path_desktop,
@@ -366,8 +403,8 @@ function update_banner_callback() {
         'url' => esc_url_raw($_POST['banner_url']),
         'position' => sanitize_text_field($_POST['banner_position']),
         'views' => intval($_POST['banner_views']),
-        'init_date' => !empty($_POST['banner_start_date']) ? sanitize_text_field($_POST['banner_start_date']) : null,
-        'end_date' => !empty($_POST['banner_end_date'])   ? sanitize_text_field($_POST['banner_end_date'])   : null,
+        'init_date' => sanitize_text_field($_POST['banner_start_date']),
+        'end_date' => sanitize_text_field($_POST['banner_end_date']),
         'country' => sanitize_text_field($_POST['country']),
         'active' => $active
     );
