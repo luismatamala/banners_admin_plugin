@@ -300,8 +300,8 @@ function get_banner_callback() {
             'url' => $banner->url,
             'position' => $banner->position,
             'views' => $banner->views,
-            'init_date' => $banner->init_date ? date('Y-m-d', strtotime($banner->init_date)) : '',
-            'end_date' => $banner->end_date ? date('Y-m-d', strtotime($banner->end_date)) : '',
+            'init_date' => $banner->init_date ? date('Y-m-d', strtotime($banner->init_date)) : null,
+            'end_date' => $banner->end_date ? date('Y-m-d', strtotime($banner->end_date)) : null,
             'country' => $banner->country,
             'path_mobile' => $banner->path_mobile,
             'path_desktop' => $banner->path_desktop,
@@ -366,8 +366,8 @@ function update_banner_callback() {
         'url' => esc_url_raw($_POST['banner_url']),
         'position' => sanitize_text_field($_POST['banner_position']),
         'views' => intval($_POST['banner_views']),
-        'init_date' => sanitize_text_field($_POST['banner_start_date']),
-        'end_date' => sanitize_text_field($_POST['banner_end_date']),
+        'init_date' => !empty($_POST['banner_start_date']) ? sanitize_text_field($_POST['banner_start_date']) : null,
+        'end_date' => !empty($_POST['banner_end_date'])   ? sanitize_text_field($_POST['banner_end_date'])   : null,
         'country' => sanitize_text_field($_POST['country']),
         'active' => $active
     );

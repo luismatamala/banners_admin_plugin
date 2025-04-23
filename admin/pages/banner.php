@@ -13,7 +13,7 @@ function custom_banner_page() {
     // Obtener el total de registros
     $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
 
-    echo  $total_items;
+    //echo  $total_items;
 
     // Obtener los registros con límite y desplazamiento
     /* $banners = $wpdb->get_results("SELECT * FROM $table_name"); */
@@ -38,8 +38,8 @@ function custom_banner_page() {
                         $banner_url = esc_url_raw($_POST['banner_url']);
                         $banner_position = sanitize_text_field($_POST['banner_position']);
                         $banner_views = intval($_POST['banner_views']);
-                        $banner_start_date = sanitize_text_field($_POST['banner_start_date']);
-                        $banner_end_date = sanitize_text_field($_POST['banner_end_date']);
+                        $banner_start_date = !empty($_POST['banner_start_date']) ? sanitize_text_field($_POST['banner_start_date']) : null;
+                        $banner_end_date   = !empty($_POST['banner_end_date'])   ? sanitize_text_field($_POST['banner_end_date'])   : null;
                         $banner_active = 1;
                         $country = sanitize_text_field($_POST['country']);
 
@@ -71,8 +71,8 @@ function custom_banner_page() {
                                     'views' => $banner_views,
                                     'remaining_views' => $banner_views,
                                     'country' => $country,
-                                    'init_date' => $banner_start_date ? $banner_start_date : null,
-                                    'end_date' => $banner_end_date ? $banner_end_date : null,
+                                    'init_date' => $banner_start_date,
+                                    'end_date'  => $banner_end_date,
                                     'active' => $banner_active
                                 )
                             );
@@ -102,9 +102,9 @@ function custom_banner_page() {
                                 <div class="mb-3">
                                     <label for="banner_position" class="form-label">Posición *</label>
                                     <select name="banner_position" id="banner_position" class="form-select" required>
-                                        <option value="top">Arriba</option>
-                                        <option value="bottom">Abajo</option>
-                                        <option value="sidebar">Barra Lateral</option>
+                                        <option value="home_top">Home top</option>
+                                        <option value="home_middle">Home middle</option>
+                                        <option value="home_bottom">Home bottom</option>
                                     </select>
                                 </div>
                             </div>
@@ -201,7 +201,7 @@ function custom_banner_page() {
                                 <td><?php echo intval($banner->views); ?></td>
                                 <td><?php echo intval($banner->remaining_views); ?></td>
                                 <td>
-                                    <?php echo !empty($banner->init_date) ? date('d-m-Y', strtotime($banner->init_date)) : ''; ?>
+                                <?php echo ($banner->init_date && strtotime($banner->init_date)) ? date('d-m-Y', strtotime($banner->init_date)) : ''; ?>
                                 </td>
                                 <td>
                                     <?php echo !empty($banner->end_date) ? date('d-m-Y', strtotime($banner->end_date)) : ''; ?>
@@ -284,9 +284,9 @@ function custom_banner_page() {
                         <div class="mb-3">
                             <label for="edit-banner-position" class="form-label"><strong>Posición</strong></label>
                             <select name="banner_position" id="edit-banner-position" class="form-select" required>
-                                <option value="top">Arriba</option>
-                                <option value="bottom">Abajo</option>
-                                <option value="sidebar">Barra Lateral</option>
+                                <option value="home_top">Home top</option>
+                                <option value="home_middle">Home middle</option>
+                                <option value="home_bottom">Home bottom</option>
                             </select>
                         </div>
                         
