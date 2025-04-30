@@ -105,6 +105,45 @@ function custom_banner_page() {
                                         <option value="home_top">Home top</option>
                                         <option value="home_middle">Home middle</option>
                                         <option value="home_bottom">Home bottom</option>
+                                        <option value="home_popup">Home PopUp</option>
+                                        <option value="revista_actual">Revista actual</option>
+                                        
+                                        <option value="trivia_banner">Trivia</option>
+                                        <option value="post_sticky_banner">Sticky Banner</option>
+
+                                        <option value="destino_pais_colombia">Destino Colombia</option>
+                                        <option value="destino_pais_argentina">Destino Argentina</option>
+                                        <option value="destino_pais_chile">Destino Chile</option>
+                                        <option value="destino_pais_peru">Destino Perú</option>
+                                        <option value="destino_pais_brasil">Destino Brasil</option>
+                                        <option value="destino_pais_ecuador">Destino Ecuador</option>
+                                        <option value="destino_pais_uruguay">Destino Uruguay</option>
+                                        <option value="destino_pais_paraguay">Destino Paraguay</option>
+                                        <option value="tipsdeviaje">Tips #DeViaje</option>
+                                        <option value="entrevistasviajeras">Entrevistas viajeras</option>
+                                        <option value="descubrelatinoamerica">Descubre Latinoamérica</option>
+                                        <option value="gastronomia">Gastronomia</option>
+                                        <option value="sostenibilidad">Sostenibilidad</option>
+
+                                        <option value="destino_del_mes_top">Destino del mes top</option>
+                                        <option value="el_aterrizaje_de_la_cultura_top">El aterrizaje de la cultura top</option>
+                                        <option value="el_despegue_de_los_likes_top">El despegue de los likes top</option>
+                                        <option value="el_tripulante_top">El tripulante top</option>
+                                        <option value="hazle_un_upgrade_a_tu_viaje_top">Hazle un upgrade a tu viaje top</option>
+                                        <option value="la_cosecha_del_mes_top">La cosecha del mes top</option>
+                                        <option value="las_3b_top">Las 3b top</option>
+                                        <option value="los_tips_del_viajero_top">Los tips del viajero top</option>
+                                        <option value="sostenibilidad_top">Sostenibilidad top</option>
+
+                                        <option value="destino_del_mes_bottom">Destino del mes bottom</option>
+                                        <option value="el_aterrizaje_de_la_cultura_bottom">El aterrizaje de la cultura bottom</option>
+                                        <option value="el_despegue_de_los_likes_bottom">El despegue de los likes bottom</option>
+                                        <option value="el_tripulante_top">El tripulante bottom</option>
+                                        <option value="hazle_un_upgrade_a_tu_viaje_bottom">Hazle un upgrade a tu viaje bottom</option>
+                                        <option value="la_cosecha_del_mes_bottom">La cosecha del mes bottom</option>
+                                        <option value="las_3b_bottom">Las 3b bottom</option>
+                                        <option value="los_tips_del_viajero_bottom">Los tips del viajero bottom</option>
+                                        <option value="sostenibilidad_bottom">Sostenibilidad bottom</option>
                                     </select>
                                 </div>
                             </div>
@@ -287,6 +326,45 @@ function custom_banner_page() {
                                 <option value="home_top">Home top</option>
                                 <option value="home_middle">Home middle</option>
                                 <option value="home_bottom">Home bottom</option>
+                                <option value="home_popup">Home PopUp</option>
+                                <option value="revista_actual">Revista actual</option>
+
+                                <option value="trivia_banner">Trivia</option>
+                                <option value="post_sticky_banner">Sticky Banner</option>
+                                
+                                <option value="destino_pais_colombia">Destino Colombia</option>
+                                <option value="destino_pais_argentina">Destino Argentina</option>
+                                <option value="destino_pais_chile">Destino Chile</option>
+                                <option value="destino_pais_peru">Destino Perú</option>
+                                <option value="destino_pais_brasil">Destino Brasil</option>
+                                <option value="destino_pais_ecuador">Destino Ecuador</option>
+                                <option value="destino_pais_uruguay">Destino Uruguay</option>
+                                <option value="destino_pais_paraguay">Destino Paraguay</option>
+                                <option value="tipsdeviaje">Tips #DeViaje</option>
+                                <option value="entrevistasviajeras">Entrevistas viajeras</option>
+                                <option value="descubrelatinoamerica">Descubre Latinoamérica</option>
+                                <option value="gastronomia">Gastronomia</option>
+                                <option value="sostenibilidad">Sostenibilidad</option>
+
+                                <option value="destino_del_mes_top">Destino del mes top</option>
+                                <option value="el_aterrizaje_de_la_cultura_top">El aterrizaje de la cultura top</option>
+                                <option value="el_despegue_de_los_likes_top">El despegue de los likes top</option>
+                                <option value="el_tripulante_top">El tripulante top</option>
+                                <option value="hazle_un_upgrade_a_tu_viaje_top">Hazle un upgrade a tu viaje top</option>
+                                <option value="la_cosecha_del_mes_top">La cosecha del mes top</option>
+                                <option value="las_3b_top">Las 3b top</option>
+                                <option value="los_tips_del_viajero_top">Los tips del viajero top</option>
+                                <option value="sostenibilidad_top">Sostenibilidad top</option>
+
+                                <option value="destino_del_mes_bottom">Destino del mes bottom</option>
+                                <option value="el_aterrizaje_de_la_cultura_bottom">El aterrizaje de la cultura bottom</option>
+                                <option value="el_despegue_de_los_likes_bottom">El despegue de los likes bottom</option>
+                                <option value="el_tripulante_top">El tripulante bottom</option>
+                                <option value="hazle_un_upgrade_a_tu_viaje_bottom">Hazle un upgrade a tu viaje bottom</option>
+                                <option value="la_cosecha_del_mes_bottom">La cosecha del mes bottom</option>
+                                <option value="las_3b_bottom">Las 3b bottom</option>
+                                <option value="los_tips_del_viajero_bottom">Los tips del viajero bottom</option>
+                                <option value="sostenibilidad_bottom">Sostenibilidad bottom</option>
                             </select>
                         </div>
                         
@@ -393,7 +471,7 @@ function custom_banner_page() {
                     "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
                 },
                 "order": [[0, "desc"]], // Cambia 0 por el índice de la columna deseada
-                "pageLength": 5
+                "pageLength": 10
             });
 
             $('.delete-banner').click(function(){

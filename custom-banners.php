@@ -403,8 +403,8 @@ function update_banner_callback() {
         'url' => esc_url_raw($_POST['banner_url']),
         'position' => sanitize_text_field($_POST['banner_position']),
         'views' => intval($_POST['banner_views']),
-        'init_date' => sanitize_text_field($_POST['banner_start_date']),
-        'end_date' => sanitize_text_field($_POST['banner_end_date']),
+        'init_date' => !empty($_POST['banner_start_date']) ? sanitize_text_field($_POST['banner_start_date']) : null,
+        'end_date' => !empty($_POST['banner_end_date'])   ? sanitize_text_field($_POST['banner_end_date'])   : null,
         'country' => sanitize_text_field($_POST['country']),
         'active' => $active
     );
