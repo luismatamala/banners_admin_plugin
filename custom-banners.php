@@ -403,13 +403,14 @@ function update_banner_callback() {
         'url' => esc_url_raw($_POST['banner_url']),
         'position' => sanitize_text_field($_POST['banner_position']),
         'views' => intval($_POST['banner_views']),
+        'remaining_views' => intval($_POST['banner_remaining_views']),
         'init_date' => !empty($_POST['banner_start_date']) ? sanitize_text_field($_POST['banner_start_date']) : null,
         'end_date' => !empty($_POST['banner_end_date'])   ? sanitize_text_field($_POST['banner_end_date'])   : null,
         'country' => sanitize_text_field($_POST['country']),
         'active' => $active
     );
 
-    $formats = array('%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d');
+    $formats = array('%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%d');
 
     // Incluir imágenes solo si se subieron
     if (!empty($banner_mobile)) {

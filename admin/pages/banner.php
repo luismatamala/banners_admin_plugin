@@ -372,6 +372,11 @@ function custom_banner_page() {
                             <label for="edit-banner-views" class="form-label"><strong>Vistas</strong></label>
                             <input type="number" name="banner_views" id="edit-banner-views" class="form-control">
                         </div>
+
+                        <div class="mb-3">
+                            <label for="edit-banner-remaining-views" class="form-label"><strong>Vistas pendientes</strong></label>
+                            <input type="number" name="banner_remaining_views" id="edit-banner-remaining-views" class="form-control">
+                        </div>
                         
                         <div class="mb-3">
                             <label for="edit-banner-start-date" class="form-label"><strong>Fecha Inicio</strong></label>
@@ -517,6 +522,7 @@ function custom_banner_page() {
                         $('#edit-banner-url').val(response.data.url);
                         $('#edit-banner-position').val(response.data.position);
                         $('#edit-banner-views').val(response.data.views);
+                        $('#edit-banner-remaining-views').val(response.data.remaining_views);
                         $('#edit-banner-start-date').val(response.data.init_date);
                         $('#edit-banner-end-date').val(response.data.end_date);
                         $('#edit-banner-country').val(response.data.country);
@@ -559,7 +565,12 @@ function custom_banner_page() {
         $('#edit-banner-form').submit(function (e) {
             e.preventDefault();
 
+            if (!$('#edit-banner-active').is(':checked')) {
+                formData.append('banner_active', 0);
+            }
+
             var formData = new FormData(this);
+            formData.append('banner_active', $('#edit-banner-active').is(':checked') ? 1 : 0);
             formData.append('action', 'update_banner'); // Agregar el action aquí
 
             $.ajax({
